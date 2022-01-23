@@ -1,1 +1,12 @@
-Mikrotik CLI on the branches
+Creating a PPTP Server
+
+/ip pool
+add name=VPN ranges=172.31.0.2-172.31.0.10
+/ppp profile
+add local-address=10.200.33.146 name=VPN remote-address=VPN
+/interface pptp-server server
+set enabled=yes
+/ip firewall nat
+add action=masquerade chain=srcnat src-address=172.31.0.2-172.31.0.10
+/ppp secret
+add name=teste profile=VPN service=pptp
