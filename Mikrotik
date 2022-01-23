@@ -1,1 +1,58 @@
-Mikrotik CLI on the branches
+#Simple filters 
+
+add interface=ether1
+/ip firewall filter
+add action=drop chain=input src-address-list=BLOQUEIO
+add action=add-src-to-address-list address-list=BLOQUEIO \
+    address-list-timeout=none-dynamic chain=input comment=Bloqueio \
+    connection-state=new dst-port=1723,1701,47 protocol=tcp src-address-list=\
+    TENTATIVA3
+add action=add-src-to-address-list address-list=TENTATIVA3 \
+    address-list-timeout=1m chain=input comment=Tentativa3 connection-state=\
+    new dst-port=1723,1701,47 protocol=tcp src-address-list=TENTATIVA2
+add action=add-src-to-address-list address-list=TENTATIVA3 \
+    address-list-timeout=1m chain=input comment=Tentativa3 connection-state=\
+    new dst-port=1723,1701,47 protocol=udp src-address-list=TENTATIVA2
+add action=add-src-to-address-list address-list=TENTATIVA2 \
+    address-list-timeout=45s chain=input comment=Tentativa2 connection-state=\
+    new dst-port=1723,1701,47 protocol=tcp src-address-list=TENTATIVA1
+add action=add-src-to-address-list address-list=TENTATIVA2 \
+    address-list-timeout=45s chain=input comment=Tentativa2 connection-state=\
+    new dst-port=1723,1701,47 protocol=udp src-address-list=TENTATIVA1
+add action=add-src-to-address-list address-list=TENTATIVA1 \
+    address-list-timeout=30s chain=input comment=Tentativa1 connection-state=\
+    new dst-port=1723,1701,47 protocol=tcp
+add action=add-src-to-address-list address-list=TENTATIVA1 \
+    address-list-timeout=30s chain=input comment=Tentativa1 connection-state=\
+    new dst-port=1723,1701,47 protocol=udp
+    ------------------------------------------------------------------------------------------------------------------------------------------
+    Firewall com marcação de pacotes
+    
+    /ip firewall filter
+add action=drop chain=input comment="Drop se estiver em blacklist" dst-port=\
+    1723,1701 protocol=tcp src-address-list=BLACKLIST
+add action=add-src-to-address-list address-list=LVL01_BRUTEFORCE \
+    address-list-timeout=2m10s chain=input packet-mark=ANTIBRUTE01 \
+    src-address-list=!LVL01_BRUTEFORCE
+add action=add-src-to-address-list address-list=LVL02_BRUTEFORCE \
+    address-list-timeout=2m10s chain=input packet-mark=ANTIBRUTE02 \
+    src-address-list=!LVL02_BRUTEFORCE
+add action=add-src-to-address-list address-list=LVL03_BRUTEFORCE \
+    address-list-timeout=2m10s chain=input packet-mark=ANTIBRUTE03 \
+    src-address-list=!LVL03_BRUTEFORCE
+add action=add-src-to-address-list address-list=BLACKLIST \
+    address-list-timeout=none-dynamic chain=input packet-mark=BLACK-LIST
+/ip firewall mangle
+add action=jump chain=input connection-state=new dst-port=1723,1701 \
+    jump-target=ANTI-BRUTEFORCE protocol=tcp
+add action=jump chain=input connection-state=new dst-port=1723,1701 \
+    jump-target=ANTI-BRUTEFORCE protocol=udp
+add action=mark-packet chain=ANTI-BRUTEFORCE new-packet-mark=ANTIBRUTE01 \
+    packet-mark=no-mark passthrough=yes src-address-list=!LVL01_BRUTEFORCE
+add action=mark-packet chain=ANTI-BRUTEFORCE new-packet-mark=ANTIBRUTE02 \
+    packet-mark=no-mark passthrough=yes src-address-list=!LVL02_BRUTEFORCE
+add action=mark-packet chain=ANTI-BRUTEFORCE new-packet-mark=ANTIBRUTE03 \
+    packet-mark=no-mark passthrough=yes src-address-list=!LVL03_BRUTEFORCE
+add action=mark-packet chain=ANTI-BRUTEFORCE new-packet-mark=BLACK-LIST \
+    packet-mark=no-mark passthrough=yes src-address-list=LVL03_BRUTEFORCE
+    
